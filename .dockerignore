@@ -1,0 +1,21 @@
+# Ignore files/folders not needed in the Docker build context
+
+# Version control
+.git
+.git/**/*
+
+# Node dependencies (they will be installed in the image)
+**/node_modules
+
+# Local build output
+**/dist
+**/build
+
+# Environment files (supply via env vars instead)
+*.env
+
+# OS / Editor junk
+.DS_Store
+*.swp
+.idea
+.vscode
