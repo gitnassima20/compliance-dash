@@ -19,3 +19,6 @@
 *.swp
 .idea
 .vscode
+
+# Exclude the entire terraform directory
+terraform/

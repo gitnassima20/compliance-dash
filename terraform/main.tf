@@ -48,14 +48,29 @@ provider "docker" {
 
 # 6. Build and push Docker images
 resource "docker_image" "backend" {
-  name         = "${module.ecr_backend.repository_url}:${var.image_tag}"
+  name = "${module.ecr_backend.repository_url}:${var.image_tag}"
+  
   build {
     context    = "${path.module}/.."
     dockerfile = "backend/Dockerfile"
     build_args = {
       BUILDKIT_INLINE_CACHE = "1"
     }
+    # Force remove intermediate containers
+    remove     = true
+    force_remove = true
+    pull_parent = false  # Don't pull base image if already exists
   }
+  
+  # Much longer timeout
+  timeouts {
+    create = "30m"
+    update = "30m"
+    delete = "10m"
+  }
+  
+  # Keep image locally to avoid re-reading
+  keep_locally = true
 }
 
 resource "docker_image" "frontend" {
@@ -67,15 +82,21 @@ resource "docker_image" "frontend" {
       BUILDKIT_INLINE_CACHE = "1"
     }
   }
+  depends_on = [docker_registry_image.backend]
 }
 
 # 7. Push Docker images to ECR
 resource "docker_registry_image" "backend" {
   name          = docker_image.backend.name
   keep_remotely = true
+  depends_on = [docker_image.backend]
 }
 
 resource "docker_registry_image" "frontend" {
   name          = docker_image.frontend.name
   keep_remotely = true
+  depends_on = [
+    docker_image.frontend,
+    docker_registry_image.backend
+  ]
 }
